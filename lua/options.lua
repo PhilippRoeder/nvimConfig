@@ -33,3 +33,14 @@ vim.opt.expandtab = true
 vim.opt.shiftwidth = 4
 vim.opt.tabstop = 4
 
+vim.opt.autochdir = true
+
+-- Automatically change directory when opening Neovim with a folder argument
+vim.api.nvim_create_autocmd("VimEnter", {
+  callback = function()
+    local path = vim.fn.argv(0)
+    if type(path) == "string" and path ~= "" and vim.fn.isdirectory(path) == 1 then
+      vim.cmd("cd " .. vim.fn.fnameescape(path))
+    end
+  end,
+})

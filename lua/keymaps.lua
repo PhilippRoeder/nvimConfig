@@ -1,30 +1,13 @@
 -- ==========================================================================
--- KEYMAPS (leader + arrows tiling, Oil explorer in direction)
+-- KEYMAPS (leader + hjkl tiling, Oil explorer in direction)
 -- ==========================================================================
 
 -- Oil (current window)
 vim.keymap.set("n", "-", "<cmd>Oil<cr>", { desc = "Oil: open parent/current directory" })
 
--- LazyGit
-vim.keymap.set("n", "<leader>g", "<cmd>LazyGit<cr>", { desc = "LazyGit" })
-
 -- ==========================================================================
 -- Helpers
 -- ==========================================================================
-
-local function tnorm()
-  if vim.fn.mode() == "t" then
-    local esc = vim.api.nvim_replace_termcodes("<C-\\><C-n>", true, false, true)
-    vim.api.nvim_feedkeys(esc, "n", false)
-  end
-end
-
-local function with_tnorm(fn)
-  return function()
-    tnorm()
-    fn()
-  end
-end
 
 local function map(mode, lhs, rhs, opts)
   opts = opts or {}
@@ -46,6 +29,15 @@ local function current_dir()
   if d and d ~= "" then return d end
   return vim.fn.getcwd()
 end
+
+-- LazyGit (Placed below current_dir to avoid Lua nil errors)
+vim.keymap.set("n", "<leader>g", function()
+  local dir = current_dir()
+  if dir and dir ~= "" then
+    vim.cmd("cd " .. vim.fn.fnameescape(dir))
+  end
+  vim.cmd("LazyGit")
+end, { desc = "LazyGit" })
 
 local function split_dir(where)
   if where == "left" then
@@ -69,46 +61,57 @@ local function open_oil_in_split(where)
 end
 
 -- ==========================================================================
--- Tiling maps (apply globally + buffer-locally for Oil)
+-- Tiling maps (leader + hjkl globally + buffer-locally for Oil)
 -- ==========================================================================
 
 local function apply_tiling_maps(opts)
   opts = opts or {}
 
-  -- Focus navigation: Space + arrows
-  map({ "n", "t" }, "<leader><Left>",  with_tnorm(function() vim.cmd("wincmd h") end), vim.tbl_extend("force", opts, { desc = "Focus left pane" }))
-  map({ "n", "t" }, "<leader><Down>",  with_tnorm(function() vim.cmd("wincmd j") end), vim.tbl_extend("force", opts, { desc = "Focus down pane" }))
-  map({ "n", "t" }, "<leader><Up>",    with_tnorm(function() vim.cmd("wincmd k") end), vim.tbl_extend("force", opts, { desc = "Focus up pane" }))
-  map({ "n", "t" }, "<leader><Right>", with_tnorm(function() vim.cmd("wincmd l") end), vim.tbl_extend("force", opts, { desc = "Focus right pane" }))
+  -- Focus navigation: Space + hjkl (Normal mode only)
+  map("n", "<leader>h", "<cmd>wincmd h<cr>", vim.tbl_extend("force", opts, { desc = "Focus left pane" }))
+  map("n", "<leader>j", "<cmd>wincmd j<cr>", vim.tbl_extend("force", opts, { desc = "Focus down pane" }))
+  map("n", "<leader>k", "<cmd>wincmd k<cr>", vim.tbl_extend("force", opts, { desc = "Focus up pane" }))
+  map("n", "<leader>l", "<cmd>wincmd l<cr>", vim.tbl_extend("force", opts, { desc = "Focus right pane" }))
 
-  -- Resize: Space w + arrows (no Shift; more reliable in Oil/term)
-  map({ "n", "t" }, "<leader>w<Left>",  with_tnorm(function() vim.cmd("vertical resize -5") end), vim.tbl_extend("force", opts, { desc = "Resize narrower" }))
-  map({ "n", "t" }, "<leader>w<Right>", with_tnorm(function() vim.cmd("vertical resize +5") end), vim.tbl_extend("force", opts, { desc = "Resize wider" }))
-  map({ "n", "t" }, "<leader>w<Up>",    with_tnorm(function() vim.cmd("resize +2") end),          vim.tbl_extend("force", opts, { desc = "Resize taller" }))
-  map({ "n", "t" }, "<leader>w<Down>",  with_tnorm(function() vim.cmd("resize -2") end),          vim.tbl_extend("force", opts, { desc = "Resize shorter" }))
+  -- Resize: Space w + hjkl (Normal mode only)
+  map("n", "<leader>wh", "<cmd>vertical resize -5<cr>", vim.tbl_extend("force", opts, { desc = "Resize narrower" }))
+  map("n", "<leader>wl", "<cmd>vertical resize +5<cr>", vim.tbl_extend("force", opts, { desc = "Resize wider" }))
+  map("n", "<leader>wk", "<cmd>resize +2<cr>",          vim.tbl_extend("force", opts, { desc = "Resize taller" }))
+  map("n", "<leader>wj", "<cmd>resize -2<cr>",          vim.tbl_extend("force", opts, { desc = "Resize shorter" }))
 
   -- Window actions
   map("n", "<leader>=", "<cmd>wincmd =<cr>", vim.tbl_extend("force", opts, { desc = "Equalize panes" }))
   map("n", "<leader>o", "<cmd>only<cr>",     vim.tbl_extend("force", opts, { desc = "Only this pane (zoom)" }))
   map("n", "<leader>q", "<cmd>close<cr>",    vim.tbl_extend("force", opts, { desc = "Close pane" }))
 
-  -- New empty file panes: Space n + arrows
-  map("n", "<leader>n<Left>",  "<cmd>leftabove vnew<cr>",  vim.tbl_extend("force", opts, { desc = "New file pane left" }))
-  map("n", "<leader>n<Right>", "<cmd>rightbelow vnew<cr>", vim.tbl_extend("force", opts, { desc = "New file pane right" }))
-  map("n", "<leader>n<Up>",    "<cmd>leftabove new<cr>",   vim.tbl_extend("force", opts, { desc = "New file pane up" }))
-  map("n", "<leader>n<Down>",  "<cmd>rightbelow new<cr>",  vim.tbl_extend("force", opts, { desc = "New file pane down" }))
+  -- New empty file panes: Space n + hjkl
+  map("n", "<leader>nh", "<cmd>leftabove vnew<cr>",  vim.tbl_extend("force", opts, { desc = "New file pane left" }))
+  map("n", "<leader>nl", "<cmd>rightbelow vnew<cr>", vim.tbl_extend("force", opts, { desc = "New file pane right" }))
+  map("n", "<leader>nk", "<cmd>leftabove new<cr>",   vim.tbl_extend("force", opts, { desc = "New file pane up" }))
+  map("n", "<leader>nj", "<cmd>rightbelow new<cr>",  vim.tbl_extend("force", opts, { desc = "New file pane down" }))
 
-  -- New tiled terminal panes: Space t + arrows
-  map("n", "<leader>t<Left>",  "<cmd>leftabove vsplit | terminal<cr>",   vim.tbl_extend("force", opts, { desc = "Terminal pane left" }))
-  map("n", "<leader>t<Right>", "<cmd>rightbelow vsplit | terminal<cr>",  vim.tbl_extend("force", opts, { desc = "Terminal pane right" }))
-  map("n", "<leader>t<Up>",    "<cmd>leftabove split | terminal<cr>",    vim.tbl_extend("force", opts, { desc = "Terminal pane up" }))
-  map("n", "<leader>t<Down>",  "<cmd>rightbelow split | terminal<cr>",   vim.tbl_extend("force", opts, { desc = "Terminal pane down" }))
+  -- New tiled terminal panes: Space t + hjkl (Syncs to current directory)
+  map("n", "<leader>th", function()
+    vim.cmd("leftabove vsplit | cd " .. vim.fn.fnameescape(current_dir()) .. " | terminal")
+  end, vim.tbl_extend("force", opts, { desc = "Terminal pane left" }))
 
-  -- Explorer panes (Oil): Space e + arrows
-  map("n", "<leader>e<Left>",  function() open_oil_in_split("left") end,  vim.tbl_extend("force", opts, { desc = "Explorer left (Oil)" }))
-  map("n", "<leader>e<Right>", function() open_oil_in_split("right") end, vim.tbl_extend("force", opts, { desc = "Explorer right (Oil)" }))
-  map("n", "<leader>e<Up>",    function() open_oil_in_split("up") end,    vim.tbl_extend("force", opts, { desc = "Explorer up (Oil)" }))
-  map("n", "<leader>e<Down>",  function() open_oil_in_split("down") end,  vim.tbl_extend("force", opts, { desc = "Explorer down (Oil)" }))
+  map("n", "<leader>tl", function()
+    vim.cmd("rightbelow vsplit | cd " .. vim.fn.fnameescape(current_dir()) .. " | terminal")
+  end, vim.tbl_extend("force", opts, { desc = "Terminal pane right" }))
+
+  map("n", "<leader>tk", function()
+    vim.cmd("leftabove split | cd " .. vim.fn.fnameescape(current_dir()) .. " | terminal")
+  end, vim.tbl_extend("force", opts, { desc = "Terminal pane up" }))
+
+  map("n", "<leader>tj", function()
+    vim.cmd("rightbelow split | cd " .. vim.fn.fnameescape(current_dir()) .. " | terminal")
+  end, vim.tbl_extend("force", opts, { desc = "Terminal pane down" }))
+
+  -- Explorer panes (Oil): Space e + hjkl
+  map("n", "<leader>eh", function() open_oil_in_split("left") end,  vim.tbl_extend("force", opts, { desc = "Explorer left (Oil)" }))
+  map("n", "<leader>el", function() open_oil_in_split("right") end, vim.tbl_extend("force", opts, { desc = "Explorer right (Oil)" }))
+  map("n", "<leader>ek", function() open_oil_in_split("up") end,    vim.tbl_extend("force", opts, { desc = "Explorer up (Oil)" }))
+  map("n", "<leader>ej", function() open_oil_in_split("down") end,  vim.tbl_extend("force", opts, { desc = "Explorer down (Oil)" }))
 end
 
 -- Global maps
@@ -121,6 +124,13 @@ vim.api.nvim_create_autocmd("FileType", {
     apply_tiling_maps({ buffer = ev.buf })
   end,
 })
+
+-- ==========================================================================
+-- Terminal specific mappings
+-- ==========================================================================
+
+-- Exit terminal mode back to Normal mode with Esc
+vim.keymap.set("t", "<Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
 
 -- ==========================================================================
 -- ToggleTerm (float terminals by ID)
