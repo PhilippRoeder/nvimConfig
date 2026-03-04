@@ -37,7 +37,8 @@ require("lazy").setup({
       local ok, configs = pcall(require, "nvim-treesitter.configs")
       if not ok then return end
       configs.setup({
-        ensure_installed = { "c", "lua", "vim", "vimdoc", "query", "markdown", "bash", "python" },
+
+        ensure_installed = {"markdown", "bash", "python" },
         auto_install = true,
         highlight = { enable = true },
       })
@@ -131,16 +132,17 @@ require("lazy").setup({
     "kdheepak/lazygit.nvim",
     dependencies = { "nvim-lua/plenary.nvim" },
   },
+  
+  -- Smart Splits
   {
-  "mrjones2014/smart-splits.nvim",
-  event = "VeryLazy",
-  opts = {
-    -- we are NOT using tmux/wezterm/kitty/zellij integration
-    multiplexer_integration = nil,
-    default_amount = 3,
-    at_edge = "wrap", -- or "stop" / "split"
-  },
-}
+    "mrjones2014/smart-splits.nvim",
+    event = "VeryLazy",
+    opts = {
+      -- we are NOT using tmux/wezterm/kitty/zellij integration
+      multiplexer_integration = nil,
+      default_amount = 3,
+      at_edge = "wrap", -- or "stop" / "split"
+    },
+  }
 
 })
-

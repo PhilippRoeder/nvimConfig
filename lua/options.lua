@@ -3,21 +3,32 @@
 -- ==========================================================================
 vim.g.mapleader = " "
 
-local function paste()
-  return { vim.fn.split(vim.fn.getreg(""), "\n"), vim.fn.getregtype("") }
-end
+-- Detect if we are running over an SSH connection
+local is_ssh = vim.env.SSH_CLIENT ~= nil or vim.env.SSH_TTY ~= nil
 
-vim.g.clipboard = {
-  name = "OSC 52",
-  copy = {
-    ["+"] = require("vim.ui.clipboard.osc52").copy("+"),
-    ["*"] = require("vim.ui.clipboard.osc52").copy("*"),
-  },
-  paste = {
-    ["+"] = paste,
-    ["*"] = paste,
-  },
-}
+if is_ssh then
+  -- Remote SSH: Use OSC 52 ONLY for copying. Disable pasting for security.
+  vim.g.clipboard = {
+    name = "OSC 52 (Copy Only)",
+    copy = {
+      ["+"] = require("vim.ui.clipboard.osc52").copy("+"),
+      ["*"] = require("vim.ui.clipboard.osc52").copy("*"),
+    },
+    paste = {
+      ["+"] = function()
+        vim.notify("Remote paste disabled for security. Use your terminal's paste (Ctrl+Shift+V / Cmd+V)", vim.log.levels.WARN)
+        return { "", "v" }
+      end,
+      ["*"] = function()
+        vim.notify("Remote paste disabled for security. Use your terminal's paste (Ctrl+Shift+V / Cmd+V)", vim.log.levels.WARN)
+        return { "", "v" }
+      end,
+    },
+  }
+else
+  -- Locally: Do nothing. Neovim will automatically use your native system 
+  -- clipboard (pbcopy/xclip/wl-clipboard) for completely secure local copy/paste.
+end
 
 vim.opt.clipboard = "unnamedplus"
 
